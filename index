@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fantasy GAA – Team Selection</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --orange: #f97316;
+      --orange-dark: #ea580c;
+      --bg: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #f3f4f6;
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .app {
+      background: var(--bg);
+      max-width: 1100px;
+      width: 100%;
+      border-radius: 1rem;
+      box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: 80vh;
+    }
+
+    header {
+      background: var(--orange);
+      color: #fff;
+      padding: 1.25rem 1.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .meta {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.9rem;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .meta-label {
+      text-transform: uppercase;
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      opacity: 0.85;
+    }
+
+    .meta-value {
+      font-weight: 600;
+    }
+
+    .budget-bar {
+      position: relative;
+      width: 220px;
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      overflow: hidden;
+    }
+
+    .budget-fill {
+      position: absolute;
+      inset: 0;
+      width: 40%;
+      background: #facc15;
+    }
+
+    main {
+      padding: 1.5rem 1.75rem 1.75rem;
+      display: grid;
+      grid-template-columns: 2.2fr 1.2fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .pitch {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      background: radial-gradient(circle at top, #fef3c7 0, #ffffff 55%);
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .section-title {
+      background: var(--orange);
+      color: #fff;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .section-title span {
+      font-size: 0.9rem;
+    }
+
+    .line {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .slot {
+      width: 90px;
+      height: 110px;
+      border-radius: 0.75rem;
+      border: 1px dashed rgba(249, 115, 22, 0.6);
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .slot:hover {
+      border-style: solid;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.12);
+      transform: translateY(-1px);
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(249, 115, 22, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--orange-dark);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .slot-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .slot-player {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 0 0.25rem;
+    }
+
+    .slot-meta {
+      font-size: 0.7rem;
+      color: var(--muted);
+    }
+
+    .sidebar {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      background: #f9fafb;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .field {
+      flex: 1 1 120px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .field label {
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-size: 0.7rem;
+    }
+
+    select {
+      padding: 0.4rem 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+      background: #fff;
+    }
+
+    .players-list {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background: #fff;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .players-header {
+      padding: 0.5rem 0.75rem;
+      background: #f3f4f6;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .player-row {
+      padding: 0.55rem 0.75rem;
+      display: grid;
+      grid-template-columns: 1.6fr 0.9fr 0.6fr 0.7fr;
+      gap: 0.4rem;
+      align-items: center;
+      font-size: 0.8rem;
+      border-top: 1px solid #f3f4f6;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+
+    .player-row:hover {
+      background: #fff7ed;
+    }
+
+    .player-name {
+      font-weight: 600;
+    }
+
+    .player-meta {
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    .player-price {
+      font-weight: 600;
+      text-align: right;
+    }
+
+    .player-fp {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--orange-dark);
+      font-weight: 600;
+    }
+
+    footer {
+      padding: 0.9rem 1.75rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      background: var(--orange);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      color: #fff;
+      font-size: 0.85rem;
+    }
+
+    .footer-left {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    .footer-pill {
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.12);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .btn-primary {
+      padding: 0.55rem 1.4rem;
+      border-radius: 999px;
+      border: none;
+      background: #fef3c7;
+      color: var(--orange-dark);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.25);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.28);
+      background: #feeeb5;
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.22);
+    }
+
+    .btn-primary span.icon {
+      font-size: 1rem;
+    }
+
+    .muted {
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Team Selection</h1>
+      <div class="meta">
+        <div class="meta-item">
+          <div class="meta-label">Gameweek</div>
+          <div class="meta-value">1 – NFL 2026</div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Budget</div>
+          <div class="meta-value">€100.0m</div>
+          <div class="budget-bar">
+            <div class="budget-fill" id="budgetFill"></div>
+          </div>
+        </div>
+        <div class="meta-item">
+          <div class="meta-label">Players Selected</div>
+          <div class="meta-value" id="playersSelected">0 / 15</div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <!-- Pitch / Selected Team -->
+      <section class="pitch">
+        <div>
+          <div class="section-title">
+            <span>Goalkeeper</span>
+          </div>
+          <div class="line" data-line="GK">
+            <div class="slot" data-slot-position="GK">
+              <div class="avatar">GK</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <span>Defenders</span>
+          </div>
+          <div class="line" data-line="DEF">
+            <!-- 4 defender slots -->
+            <div class="slot" data-slot-position="DEF">
+              <div class="avatar">D</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="DEF">
+              <div class="avatar">D</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="DEF">
+              <div class="avatar">D</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="DEF">
+              <div class="avatar">D</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <span>Midfielders</span>
+          </div>
+          <div class="line" data-line="MID">
+            <div class="slot" data-slot-position="MID">
+              <div class="avatar">M</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="MID">
+              <div class="avatar">M</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-title">
+            <span>Forwards</span>
+          </div>
+          <div class="line" data-line="FWD">
+            <div class="slot" data-slot-position="FWD">
+              <div class="avatar">F</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="FWD">
+              <div class="avatar">F</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+            <div class="slot" data-slot-position="FWD">
+              <div class="avatar">F</div>
+              <div class="slot-label">Pick player</div>
+              <div class="slot-player" data-slot-name></div>
+              <div class="slot-meta" data-slot-meta></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sidebar / Player List -->
+      <aside class="sidebar">
+        <div class="filters">
+          <div class="field">
+            <label for="filterPosition">Position</label>
+            <select id="filterPosition">
+              <option value="">All</option>
+              <option value="GK">Goalkeeper</option>
+              <option value="DEF">Defender</option>
+              <option value="MID">Midfielder</option>
+              <option value="FWD">Forward</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filterCounty">County</label>
+            <select id="filterCounty">
+              <option value="">All</option>
+              <option value="Dublin">Dublin</option>
+              <option value="Donegal">Donegal</option>
+              <option value="Mayo">Mayo</option>
+              <option value="Galway">Galway</option>
+              <option value="Kerry">Kerry</option>
+              <option value="Roscommon">Roscommon</option>
+              <option value="Monaghan">Monaghan</option>
+              <option value="Armagh">Armagh</option>
+              <option value="Meath">Meath</option>
+              <option value="Derry">Derry</option>
+              <option value="Tyrone">Tyrone</option>
+              <option value="Kildare">Kildare</option>
+              <option value="Cork">Cork</option>
+              <option value="Cavan">Cavan</option>
+              <option value="Louth">Louth</option>
+              <option value="Offaly">Offaly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="players-list">
+          <div class="players-header">
+            <span>Players</span>
+            <span>Price / GW1</span>
+          </div>
+          <div id="playersContainer"></div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <div class="footer-left">
+        <div class="footer-pill">
+          <span id="footerBudget">Budget remaining: €100.0m</span>
+        </div>
+        <div class="footer-pill muted">
+          Max 3 players per county • 1 GK, 4 DEF, 2 MID, 3 FWD
+        </div>
+      </div>
+      <button class="btn-primary" id="confirmBtn">
+        <span class="icon">✓</span>
+        <span>Confirm Team</span>
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    // Sample data – plug in your full GW1 dataset here
+    const players = [
+      // Dublin
+      { name: "Con O'Callaghan", county: "Dublin", position: "FWD", price: 10.5, goals: 0, points: 8, minutes: 75, card: null, fantasy_points: 29 },
+      { name: "Evan Comerford", county: "Dublin", position: "GK", price: 6.0, goals: 0, points: 0, minutes: 75, card: null, fantasy_points: 4 },
+      { name: "Brian Howard", county: "Dublin", position: "MID", price: 8.0, goals: 0, points: 0, minutes: 75, card: "black", fantasy_points: 3 },
+
+      // Donegal
+      { name: "Michael Langan", county: "Donegal", position: "MID", price: 9.5, goals: 0, points: 6, minutes: 75, card: null, fantasy_points: 23 },
+      { name: "Shea Malone", county: "Donegal", position: "FWD", price: 7.5, goals: 1, points: 0, minutes: 54, card: null, fantasy_points: 11 },
+      { name: "Gavin Mulreany", county: "Donegal", position: "GK", price: 5.5, goals: 0, points: 4, minutes: 75, card: null, fantasy_points: 21 },
+
+      // Mayo
+      { name: "Robbie Hennelly", county: "Mayo", position: "GK", price: 6.5, goals: 0, points: 6, minutes: 75, card: null, fantasy_points: 22 },
+      { name: "Ryan O'Donoghue", county: "Mayo", position: "FWD", price: 9.0, goals: 0, points: 5, minutes: 75, card: null, fantasy_points: 20 },
+      { name: "Darragh Beirne", county: "Mayo", position: "FWD", price: 7.0, goals: 1, points: 1, minutes: 49, card: null, fantasy_points: 14 },
+
+      // Galway
+      { name: "Fionn McDonagh", county: "Galway", position: "FWD", price: 9.5, goals: 1, points: 4, minutes: 75, card: null, fantasy_points: 25 },
+      { name: "Robert Finnerty", county: "Galway", position: "FWD", price: 8.5, goals: 0, points: 5, minutes: 75, card: null, fantasy_points: 20 },
+      { name: "Shane McGrath", county: "Galway", position: "FWD", price: 7.5, goals: 1, points: 0, minutes: 26, card: null, fantasy_points: 9 }
+    ];
+
+    const MAX_BUDGET = 100.0;
+    const SLOTS_CONFIG = {
+      GK: 1,
+      DEF: 4,
+      MID: 2,
+      FWD: 3
+    };
+
+    const state = {
+      selected: [], // {slotIndex, position, player}
+      budgetUsed: 0
+    };
+
+    const playersContainer = document.getElementById("playersContainer");
+    const filterPosition = document.getElementById("filterPosition");
+    const filterCounty = document.getElementById("filterCounty");
+    const playersSelectedEl = document.getElementById("playersSelected");
+    const footerBudgetEl = document.getElementById("footerBudget");
+    const budgetFillEl = document.getElementById("budgetFill");
+    const confirmBtn = document.getElementById("confirmBtn");
+
+    function renderPlayers() {
+      const posFilter = filterPosition.value;
+      const countyFilter = filterCounty.value;
+      playersContainer.innerHTML = "";
+
+      const filtered = players.filter(p => {
+        if (posFilter && p.position !== posFilter) return false;
+        if (countyFilter && p.county !== countyFilter) return false;
+        return true;
+      });
+
+      filtered.forEach((p, index) => {
+        const row = document.createElement("div");
+        row.className = "player-row";
+        row.dataset.index = index;
+
+        const name = document.createElement("div");
+        name.className = "player-name";
+        name.textContent = p.name;
+
+        const meta = document.createElement("div");
+        meta.className = "player-meta";
+        meta.textContent = `${p.county} • ${p.position}`;
+
+        const price = document.createElement("div");
+        price.className = "player-price";
+        price.textContent = `€${p.price.toFixed(1)}m`;
+
+        const fp = document.createElement("div");
+        fp.className = "player-fp";
+        fp.textContent = `${p.fantasy_points} pts`;
+
+        const left = document.createElement("div");
+        left.appendChild(name);
+        left.appendChild(meta);
+
+        row.appendChild(left);
+        row.appendChild(document.createElement("div")); // spacer
+        row.appendChild(price);
+        row.appendChild(fp);
+
+        row.addEventListener("click", () => handlePlayerClick(p));
+
+        playersContainer.appendChild(row);
+      });
+    }
+
+    function handlePlayerClick(player) {
+      // find first empty slot for this position
+      const slots = document.querySelectorAll(`.slot[data-slot-position="${player.position}"]`);
+      let targetSlot = null;
+      for (const slot of slots) {
+        const nameEl = slot.querySelector("[data-slot-name]");
+        if (!nameEl.textContent) {
+          targetSlot = slot;
+          break;
+        }
+      }
+      if (!targetSlot) {
+        alert(`All ${player.position} slots are filled.`);
+        return;
+      }
+
+      // check budget
+      if (state.budgetUsed + player.price > MAX_BUDGET) {
+        alert("Not enough budget for this player.");
+        return;
+      }
+
+      // check max 3 per county
+      const countyCount = state.selected.filter(s => s.player.county === player.county).length;
+      if (countyCount >= 3) {
+        alert(`You already have 3 players from ${player.county}.`);
+        return;
+      }
+
+      // assign to slot
+      const nameEl = targetSlot.querySelector("[data-slot-name]");
+      const metaEl = targetSlot.querySelector("[data-slot-meta]");
+      nameEl.textContent = player.name;
+      metaEl.textContent = `${player.county} • €${player.price.toFixed(1)}m • GW1 ${player.fantasy_points} pts`;
+
+      state.selected.push({
+        slot: targetSlot,
+        position: player.position,
+        player
+      });
+      state.budgetUsed += player.price;
+      updateMeta();
+    }
+
+    function updateMeta() {
+      const totalSlots =
+        SLOTS_CONFIG.GK + SLOTS_CONFIG.DEF + SLOTS_CONFIG.MID + SLOTS_CONFIG.FWD;
+      playersSelectedEl.textContent = `${state.selected.length} / ${totalSlots}`;
+
+      const remaining = MAX_BUDGET - state.budgetUsed;
+      footerBudgetEl.textContent = `Budget remaining: €${remaining.toFixed(1)}m`;
+
+      const usedRatio = state.budgetUsed / MAX_BUDGET;
+      budgetFillEl.style.width = `${Math.min(usedRatio * 100, 100)}%`;
+    }
+
+    filterPosition.addEventListener("change", renderPlayers);
+    filterCounty.addEventListener("change", renderPlayers);
+
+    confirmBtn.addEventListener("click", () => {
+      const totalSlots =
+        SLOTS_CONFIG.GK + SLOTS_CONFIG.DEF + SLOTS_CONFIG.MID + SLOTS_CONFIG.FWD;
+      if (state.selected.length !== totalSlots) {
+        alert("Please fill all positions before confirming your team.");
+        return;
+      }
+      const names = state.selected.map(s => s.player.name);
+      alert("Team confirmed:\n\n" + names.join("\n"));
+    });
+
+    renderPlayers();
+    updateMeta();
+  </script>
+</body>
+</html>
