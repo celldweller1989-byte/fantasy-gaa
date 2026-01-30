@@ -123,4 +123,294 @@
       background: var(--orange);
       color: #fff;
       padding: 0.35rem 0.75rem;
-      border-radius
+      border-radius: 999px;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .line {
+      display: flex;
+      justify-content: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .slot {
+      width: 90px;
+      height: 110px;
+      border-radius: 0.75rem;
+      border: 1px dashed rgba(249, 115, 22, 0.6);
+      background: rgba(255, 255, 255, 0.7);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .slot.drag-over {
+      background: #fff7ed;
+      border-style: solid;
+    }
+
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: rgba(249, 115, 22, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--orange-dark);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .slot-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+    }
+
+    .slot-player {
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .slot-meta {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .sidebar {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      background: #f9fafb;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .players-list {
+      border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background: #fff;
+      max-height: 360px;
+      overflow: auto;
+    }
+
+    .player-row {
+      padding: 0.6rem 0.75rem;
+      display: grid;
+      grid-template-columns: 1.5fr 1fr auto auto;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      border-top: 1px solid #f3f4f6;
+      cursor: grab;
+    }
+
+    .player-row:active { cursor: grabbing; }
+
+    footer {
+      padding: 0.9rem 1.75rem;
+      background: var(--orange);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+<header>
+  <h1>Team Selection</h1>
+  <div class="meta">
+    <div class="meta-item"><div class="meta-label">Budget</div><div class="meta-value">€100.0m</div></div>
+    <div class="meta-item"><div class="meta-label">Players</div><div class="meta-value" id="playersSelected">0 / 15</div></div>
+    <div class="meta-item"><div class="meta-label">Deadline</div><div class="meta-value" id="countdown">Loading…</div></div>
+  </div>
+</header>
+
+<main>
+<section class="pitch">
+  <div class="section-title">Goalkeeper</div>
+  <div class="line"><div class="slot" data-slot-position="GK"><div class="avatar">GK</div><div class="slot-label">Pick</div><div class="slot-player"></div><div class="slot-meta"></div></div></div>
+
+  <div class="section-title">Defenders</div>
+  <div class="line" data-line="DEF">
+    ${Array(6).fill(0).map(() => `<div class="slot" data-slot-position="DEF"><div class="avatar">D</div><div class="slot-label">Pick</div><div class="slot-player"></div><div class="slot-meta"></div></div>`).join('')}
+  </div>
+
+  <div class="section-title">Midfielders</div>
+  <div class="line" data-line="MID">
+    ${Array(2).fill(0).map(() => `<div class="slot" data-slot-position="MID"><div class="avatar">M</div><div class="slot-label">Pick</div><div class="slot-player"></div><div class="slot-meta"></div></div>`).join('')}
+  </div>
+
+  <div class="section-title">Forwards</div>
+  <div class="line" data-line="FWD">
+    ${Array(6).fill(0).map(() => `<div class="slot" data-slot-position="FWD"><div class="avatar">F</div><div class="slot-label">Pick</div><div class="slot-player"></div><div class="slot-meta"></div></div>`).join('')}
+  </div>
+</section>
+
+<aside class="sidebar">
+  <div class="players-list" id="playersContainer"></div>
+</aside>
+</main>
+
+<footer>
+  <span id="footerBudget">Budget remaining: €100.0m</span>
+</footer>
+</div>
+
+<script>
+const players = [
+  { name: "Con O'Callaghan", county: "Dublin", position: "FWD", price: 10.5, fantasy_points: 29 },
+  { name: "Evan Comerford", county: "Dublin", position: "GK", price: 6.0, fantasy_points: 4 },
+  { name: "Michael Langan", county: "Donegal", position: "MID", price: 9.5, fantasy_points: 23 }
+];
+
+const MAX_BUDGET = 100;
+const MAX_PER_COUNTY = 3;
+const state = { selected: [], budgetUsed: 0 };
+
+const playersContainer = document.getElementById("playersContainer");
+const playersSelectedEl = document.getElementById("playersSelected");
+const footerBudgetEl = document.getElementById("footerBudget");
+const countdownEl = document.getElementById("countdown");
+
+// ---------------------------
+// DEADLINE SETUP
+// ---------------------------
+function getNextFridayDeadline() {
+  const now = new Date();
+  const deadline = new Date();
+
+  // Set to Friday
+  const day = now.getDay();
+  const daysUntilFriday = (5 - day + 7) % 7;
+  deadline.setDate(now.getDate() + daysUntilFriday);
+
+  // Set time to 23:59
+  deadline.setHours(23, 59, 0, 0);
+
+  return deadline;
+}
+
+const DEADLINE = getNextFridayDeadline();
+
+function isDeadlinePassed() {
+  return new Date() > DEADLINE;
+}
+
+// ---------------------------
+// COUNTDOWN TIMER
+// ---------------------------
+function updateCountdown() {
+  const now = new Date();
+  const diff = DEADLINE - now;
+
+  if (diff <= 0) {
+    countdownEl.textContent = "Locked";
+    return;
+  }
+
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const mins = Math.floor((diff / (1000 * 60)) % 60);
+  const secs = Math.floor((diff / 1000) % 60);
+
+  countdownEl.textContent = `${hours}h ${mins}m ${secs}s`;
+}
+
+setInterval(updateCountdown, 1000);
+updateCountdown();
+
+// ---------------------------
+// RENDER PLAYERS
+// ---------------------------
+function renderPlayers() {
+  playersContainer.innerHTML = "";
+  players.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "player-row";
+    row.draggable = true;
+    row.innerHTML = `<strong>${p.name}</strong><span>${p.position}</span><span>€${p.price}</span>`;
+    row.addEventListener("dragstart", e => {
+      if (isDeadlinePassed()) {
+        alert("The deadline has passed. Team selection is locked.");
+        e.preventDefault();
+        return;
+      }
+      e.dataTransfer.setData("player", i);
+    });
+    playersContainer.appendChild(row);
+  });
+}
+
+// ---------------------------
+// ENABLE SLOTS
+// ---------------------------
+function enableSlots() {
+  document.querySelectorAll(".slot").forEach(slot => {
+    slot.addEventListener("dragover", e => {
+      if (isDeadlinePassed()) return;
+      e.preventDefault();
+      slot.classList.add("drag-over");
+    });
+
+    slot.addEventListener("dragleave", () => slot.classList.remove("drag-over"));
+
+    slot.addEventListener("drop", e => {
+      if (isDeadlinePassed()) {
+        alert("The deadline has passed. Team selection is locked.");
+        return;
+      }
+
+      e.preventDefault();
+      slot.classList.remove("drag-over");
+
+      const p = players[e.dataTransfer.getData("player")];
+
+      if (p.position !== slot.dataset.slotPosition) {
+        return alert("Wrong position");
+      }
+
+      if (slot.querySelector('.slot-player').textContent) return;
+
+      // COUNTY LIMIT CHECK
+      const countFromCounty = state.selected.filter(x => x.county === p.county).length;
+      if (countFromCounty >= MAX_PER_COUNTY) {
+        return alert(`You can only pick a maximum of ${MAX_PER_COUNTY} players from ${p.county}.`);
+      }
+
+      slot.querySelector('.slot-player').textContent = p.name;
+      slot.querySelector('.slot-meta').textContent = `${p.county} €${p.price}m`;
+
+      state.selected.push(p);
+      state.budgetUsed += p.price;
+
+      playersSelectedEl.textContent = `${state.selected.length} players`;
+      footerBudgetEl.textContent = `Budget remaining: €${(MAX_BUDGET - state.budgetUsed).toFixed(1)}m`;
+    });
+  });
+}
+
+renderPlayers();
+enableSlots();
+</script>
+</body>
+</html>
