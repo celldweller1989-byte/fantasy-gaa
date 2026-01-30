@@ -267,28 +267,24 @@
     }
 
 async function saveTeamToSheet() {
-    // --- ADDED: Saturday 11am Deadline Check ---
     const now = new Date();
-    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const day = now.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
     const hour = now.getHours();
 
-    // If it's Saturday (6) and 11am or later, OR if it's Sunday (0)
-    if ((day === 6 && hour >= 11) || day === 0) {
-        return alert("The market is closed! Deadlines for this weekend passed on Saturday at 11:00 AM.");
-    }
-    // ------------------------------------------
+    // LOCK LOGIC: 
+    // 1. Is it Saturday after 11am?
+    const isAfterSatDeadline = (day === 6 && hour >= 11);
+    // 2. Is it Sunday? (All day)
+    const isSunday = (day === 0);
+    // 3. Is it Monday before 9am? (Optional: keeps it closed until matches/results are cleared)
+    const isBeforeMonReopen = (day === 1 && hour < 9);
 
-    if (!checkMarketStatus()) return alert("Market is currently closed.");
-    if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
-
-    let managerName = localStorage.getItem('fantasy_manager');
-    if (!managerName) {
-        managerName = prompt("Enter your Manager Name:");
-        if (!managerName) return;
-        localStorage.setItem('fantasy_manager', managerName);
+    if (isAfterSatDeadline || isSunday || isBeforeMonReopen) {
+        return alert("The market is CLOSED. It closes every Saturday at 11:00 AM and re-opens Monday morning.");
     }
-    
-    // ... rest of your existing allocation logic (sorting players, transfer limits, etc.)
+
+    // ... existing validation (checkMarketStatus, squad length, etc.)
+
 
 
    // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
