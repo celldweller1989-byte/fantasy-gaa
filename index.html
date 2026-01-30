@@ -266,16 +266,30 @@
         updateUI();
     }
 
-    async function saveTeamToSheet() {
-        if (!checkMarketStatus()) return alert("Market is currently closed.");
-        if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
+async function saveTeamToSheet() {
+    // --- ADDED: Saturday 11am Deadline Check ---
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+    const hour = now.getHours();
 
-        let managerName = localStorage.getItem('fantasy_manager');
-        if (!managerName) {
-            managerName = prompt("Enter your Manager Name:");
-            if (!managerName) return;
-            localStorage.setItem('fantasy_manager', managerName);
-        }
+    // If it's Saturday (6) and 11am or later, OR if it's Sunday (0)
+    if ((day === 6 && hour >= 11) || day === 0) {
+        return alert("The market is closed! Deadlines for this weekend passed on Saturday at 11:00 AM.");
+    }
+    // ------------------------------------------
+
+    if (!checkMarketStatus()) return alert("Market is currently closed.");
+    if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
+
+    let managerName = localStorage.getItem('fantasy_manager');
+    if (!managerName) {
+        managerName = prompt("Enter your Manager Name:");
+        if (!managerName) return;
+        localStorage.setItem('fantasy_manager', managerName);
+    }
+    
+    // ... rest of your existing allocation logic (sorting players, transfer limits, etc.)
+
 
    // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
         const order = ['GK', 'DEF', 'MID', 'FWD', 'SUB'];
