@@ -118,7 +118,7 @@
     
     let allPlayers = [];
     let state = { budget: 100.0, squad: [] };
-    const LIMITS = { GK: 1, DEF: 6, MID: 2, FWD: 6, SUB: 3, COUNTY: 2 };
+    const LIMITS = { GK: 1, DEF: 6, MID: 2, FWD: 6, SUB: 3, COUNTY: 3 };
 
     function getDirectImg(url) {
         if (!url) return '';
@@ -277,7 +277,7 @@
             localStorage.setItem('fantasy_manager', managerName);
         }
 
-        // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
+   // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
         const order = ['GK', 'DEF', 'MID', 'FWD', 'SUB'];
         const sortedSquadNames = [];
         order.forEach(role => {
@@ -285,11 +285,14 @@
             sortedSquadNames.push(...players);
         });
 
-        // 2 Transfer Limit Check
+        // 3 Transfer Limit Check - CORRECTED LOGIC
         const lastSaved = JSON.parse(localStorage.getItem('last_saved_squad') || "[]");
         if (lastSaved.length > 0) {
+            // Count how many players in the *new* squad were *not* in the *last saved* squad
             const changes = sortedSquadNames.filter(name => !lastSaved.includes(name)).length;
-            if (changes > 2) return alert(`Limit exceeded: ${changes} changes. Only 2 allowed.`);
+            
+            // The condition has been updated from 'changes > 2' to 'changes > 3'
+            if (changes > 3) return alert(`Limit exceeded: ${changes} changes. Only 3 allowed.`);
         }
 
         try {
@@ -316,6 +319,7 @@
 
     function resetSquad() { if(confirm("Clear squad?")) { state.squad = []; state.budget = 100.0; updateUI(); } }
     init();
+
 </script>
 </body>
 </html>
