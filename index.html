@@ -118,7 +118,7 @@
     
     let allPlayers = [];
     let state = { budget: 100.0, squad: [] };
-    const LIMITS = { GK: 1, DEF: 6, MID: 2, FWD: 6, SUB: 3, COUNTY: 3 };
+    const LIMITS = { GK: 1, DEF: 6, MID: 2, FWD: 6, SUB: 3, COUNTY: 2 };
 
     function getDirectImg(url) {
         if (!url) return '';
@@ -127,24 +127,16 @@
             return clean.replace('imgur.com', 'i.imgur.com') + '.png';
         }
         return clean;
-        async function init() {
-        // Run the status check as soon as the app starts
+    }
+
+    async function init() {
         checkMarketStatus();
-        
         try {
             const res = await fetch(SCORERS_URL + '&t=' + new Date().getTime());
             const text = await res.text();
             processScorers(text);
-        } catch (e) { 
-            console.error(e); 
-        }
-    } // <--- THIS BRACE WAS MISSING. It closes the init function.
-
-    // --- MARKET CONFIGURATION ---
-    const DEADLINE_DAY = 6;  // Saturday
-    const DEADLINE_HOUR = 11; // 11 AM
-    const REOPEN_DAY = 1;    // Monday
-    const REOPEN_HOUR = 9;   // 9 AM
+        } catch (e) { console.error(e); }
+    }
 
     function checkMarketStatus() {
         const now = new Date();
@@ -153,71 +145,21 @@
         const btn = document.getElementById('btn-save');
         const msg = document.getElementById('market-status-msg');
 
-        // Logic: Closed if (Sat after 11am) OR (Sunday) OR (Mon before 9am)
-        const isAfterSatDeadline = (day === DEADLINE_DAY && hour >= DEADLINE_HOUR);
-        const isSunday = (day === 0);
-        const isBeforeMonReopen = (day === REOPEN_DAY && hour < REOPEN_HOUR);
+        let isOpen = true;
+        if (day === 5 && hour >= 21) isOpen = false; 
+        if (day === 6 || day === 0) isOpen = false;  
+        if (day === 1 && hour < 7) isOpen = false;   
 
-        const isOpen = !(isAfterSatDeadline || isSunday || isBeforeMonReopen);
-
-        if (btn && msg) { // Safety check to ensure elements exist
-            if (!isOpen) {
-                btn.disabled = true;
-                btn.style.opacity = "0.5"; // Visual cue button is disabled
-                msg.innerText = "Market Closed (Opens Mon 9am)";
-                msg.style.color = "red";
-            } else {
-                btn.disabled = false;
-                btn.style.opacity = "1";
-                msg.innerText = "Market Open - 3 Transfers Allowed";
-                msg.style.color = "green";
-            }
+        if (!isOpen) {
+            btn.disabled = true;
+            msg.innerText = "Market Closed (Opens Mon 7am)";
+            msg.style.color = "var(--red)";
+        } else {
+            btn.disabled = false;
+            msg.innerText = "Market Open - 2 Transfers Allowed";
+            msg.style.color = "var(--green)";
         }
         return isOpen;
-    }
-
-    async function saveTeamToSheet() {
-        // Re-check status in case they left the tab open overnight
-        if (!checkMarketStatus()) {
-             return alert("The market is currently closed. Deadlines passed.");
-        }
-
-        if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
-
-        let managerName = localStorage.getItem('fantasy_manager');
-        if (!managerName) {
-            managerName = prompt("Enter your Manager Name:");
-            if (!managerName) return;
-            localStorage.setItem('fantasy_manager', managerName);
-        }
-
-        // --- ALLOCATION LOGIC ---
-        const order = ['GK', 'DEF', 'MID', 'FWD', 'SUB'];
-        const sortedSquadNames = [];
-        order.forEach(role => {
-            const players = state.squad.filter(p => p.role === role).map(p => p.name);
-            sortedSquadNames.push(...players);
-        });
-
-        // --- 3 TRANSFER LIMIT CHECK ---
-        const lastSaved = JSON.parse(localStorage.getItem('last_saved_squad') || "[]");
-        if (lastSaved.length > 0) {
-            const changes = sortedSquadNames.filter(name => !lastSaved.includes(name)).length;
-            if (changes > 3) return alert(`Limit exceeded: ${changes} changes. Only 3 allowed.`);
-        }
-
-        try {
-            await fetch(APPS_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ manager: managerName, squad: sortedSquadNames })
-            });
-            
-            localStorage.setItem('last_saved_squad', JSON.stringify(sortedSquadNames));
-            alert("Team saved successfully!");
-        } catch (e) {
-            alert("Save failed. Please try again.");
-        }
     }
 
     function processScorers(csvText) {
@@ -268,8 +210,8 @@
 
     function renderMarket(data) {
         document.getElementById('market-body').innerHTML = data.map(p => {
-            const ptSymbol = p.totalPts >= 0 ? 'â–²' : 'â–¼';
-            const priceSymbol = p.price > 5.5 ? 'â–²' : (p.price < 5.5 ? 'â–¼' : '');
+            const ptSymbol = p.totalPts >= 0 ? '▲' : '▼';
+            const priceSymbol = p.price > 5.5 ? '▲' : (p.price < 5.5 ? '▼' : '');
             const resClass = p.result.includes('WIN') ? 'res-win' : 'res-loss';
             return `
             <tr>
@@ -314,7 +256,7 @@
             <div>GK: ${counts.GK}/1</div><div>DEF: ${counts.DEF}/6</div><div>MID: ${counts.MID}/2</div>
             <div>FWD: ${counts.FWD}/6</div><div>SUB: ${counts.SUB}/3</div><div>Total: ${state.squad.length}/18</div>`;
         document.getElementById('squad-list').innerHTML = state.squad.map((p, i) => `
-            <div class="squad-slot"><span><b>[${p.role}]</b> ${p.name} <small>(${p.county})</small></span><button onclick="removePlayer(${i})" style="border:none; background:none; color:red; cursor:pointer;">Ã—</button></div>
+            <div class="squad-slot"><span><b>[${p.role}]</b> ${p.name} <small>(${p.county})</small></span><button onclick="removePlayer(${i})" style="border:none; background:none; color:red; cursor:pointer;">×</button></div>
         `).join('');
     }
 
@@ -324,28 +266,18 @@
         updateUI();
     }
 
-async function saveTeamToSheet() {
-    const now = new Date();
-    const day = now.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-    const hour = now.getHours();
+    async function saveTeamToSheet() {
+        if (!checkMarketStatus()) return alert("Market is currently closed.");
+        if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
 
-    // LOCK LOGIC: 
-    // 1. Is it Saturday after 11am?
-    const isAfterSatDeadline = (day === 6 && hour >= 11);
-    // 2. Is it Sunday? (All day)
-    const isSunday = (day === 0);
-    // 3. Is it Monday before 9am? (Optional: keeps it closed until matches/results are cleared)
-    const isBeforeMonReopen = (day === 1 && hour < 9);
+        let managerName = localStorage.getItem('fantasy_manager');
+        if (!managerName) {
+            managerName = prompt("Enter your Manager Name:");
+            if (!managerName) return;
+            localStorage.setItem('fantasy_manager', managerName);
+        }
 
-    if (isAfterSatDeadline || isSunday || isBeforeMonReopen) {
-        return alert("The market is CLOSED. It closes every Saturday at 11:00 AM and re-opens Monday morning.");
-    }
-
-    // ... existing validation (checkMarketStatus, squad length, etc.)
-
-
-
-   // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
+        // --- ALLOCATION LOGIC FOR INDIVIDUAL CELLS ---
         const order = ['GK', 'DEF', 'MID', 'FWD', 'SUB'];
         const sortedSquadNames = [];
         order.forEach(role => {
@@ -353,14 +285,11 @@ async function saveTeamToSheet() {
             sortedSquadNames.push(...players);
         });
 
-        // 3 Transfer Limit Check - CORRECTED LOGIC
+        // 2 Transfer Limit Check
         const lastSaved = JSON.parse(localStorage.getItem('last_saved_squad') || "[]");
         if (lastSaved.length > 0) {
-            // Count how many players in the *new* squad were *not* in the *last saved* squad
             const changes = sortedSquadNames.filter(name => !lastSaved.includes(name)).length;
-            
-            // The condition has been updated from 'changes > 2' to 'changes > 3'
-            if (changes > 3) return alert(`Limit exceeded: ${changes} changes. Only 3 allowed.`);
+            if (changes > 2) return alert(`Limit exceeded: ${changes} changes. Only 2 allowed.`);
         }
 
         try {
@@ -387,7 +316,6 @@ async function saveTeamToSheet() {
 
     function resetSquad() { if(confirm("Clear squad?")) { state.squad = []; state.budget = 100.0; updateUI(); } }
     init();
-
 </script>
 </body>
 </html>
