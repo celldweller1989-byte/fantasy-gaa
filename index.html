@@ -136,27 +136,68 @@
             const text = await res.text();
             processScorers(text);
         } catch (e) { console.error(e); }
+   // Define the shared market logic configuration
+    const DEADLINE_DAY = 6; // Saturday
+    const DEADLINE_HOUR = 11; // 11 AM
+    const REOPEN_DAY = 1; // Monday
+    const REOPEN_HOUR = 9; // 9 AM (Changed from 7am in your original code to match previous conversation)
+
+
+    async function saveTeamToSheet() {
+        // --- Use the shared check to stop the save action ---
+        if (!checkMarketStatus()) {
+             // We can provide a more specific message here if checkMarketStatus doesn't return one
+             return alert("The market is currently closed. Deadlines passed.");
+        }
+
+        if (state.squad.length < 18) return alert("You need a full 18-man squad to save.");
+
+        let managerName = localStorage.getItem('fantasy_manager');
+        if (!managerName) {
+            managerName = prompt("Enter your Manager Name:");
+            if (!managerName) return;
+            localStorage.setItem('fantasy_manager', managerName);
+        }
+
+        // ... (rest of your allocation and saving logic goes here) ...
+
+        // Example of where your previous logic was:
+        /*
+        // 3 Transfer Limit Check - This should remain here as a separate check
+        const lastSaved = JSON.parse(localStorage.getItem('last_saved_squad') || "[]");
+        if (lastSaved.length > 0) {
+            const changes = sortedSquadNames.filter(name => !lastSaved.includes(name)).length;
+            if (changes > 3) return alert(`Limit exceeded: ${changes} changes. Only 3 allowed.`);
+        }
+        */
+
     }
 
     function checkMarketStatus() {
         const now = new Date();
-        const day = now.getDay(); 
+        const day = now.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
         const hour = now.getHours();
         const btn = document.getElementById('btn-save');
         const msg = document.getElementById('market-status-msg');
 
         let isOpen = true;
-        if (day === 6 && hour = 11) isOpen = false; 
-        if (day === 7 || day === 0) isOpen = false;  
-        if (day === 1 && hour < 7) isOpen = false;   
+
+        // Market should be closed from Saturday 11am until Monday 9am
+        const isAfterSatDeadline = (day === DEADLINE_DAY && hour >= DEADLINE_HOUR);
+        const isSunday = (day === 0);
+        const isBeforeMonReopen = (day === REOPEN_DAY && hour < REOPEN_HOUR);
+
+        if (isAfterSatDeadline || isSunday || isBeforeMonReopen) {
+            isOpen = false;
+        }
 
         if (!isOpen) {
             btn.disabled = true;
-            msg.innerText = "Market Closed (Opens Mon 7am)";
+            msg.innerText = "Market Closed (Opens Mon 9am)"; // Updated message
             msg.style.color = "var(--red)";
         } else {
             btn.disabled = false;
-            msg.innerText = "Market Open - 2 Transfers Allowed";
+            msg.innerText = "Market Open - 3 Transfers Allowed"; // Updated message
             msg.style.color = "var(--green)";
         }
         return isOpen;
